@@ -28,6 +28,7 @@ logging:
 
 cors:
   allowed-origins:
+    - https://www.dinerop.com
+    - https://dinerop.com
     - https://markup-landing.vercel.app
     - https://dinerup-app.vercel.app
-    - https://www.dinerop.com
