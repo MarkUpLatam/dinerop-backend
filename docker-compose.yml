@@ -1,0 +1,19 @@
+version: '3.9'
+
+services:
+
+  postgres:
+    image: postgres:16
+    container_name: dinerop-postgres
+    restart: always
+    environment:
+      POSTGRES_DB: dinerop
+      POSTGRES_USER: dinerop_user
+      POSTGRES_PASSWORD: dinerop_password
+    ports:
+      - "5442:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:
