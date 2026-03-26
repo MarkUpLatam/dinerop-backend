@@ -30,3 +30,4 @@ cors:
   allowed-origins:
     - https://markup-landing.vercel.app
     - https://dinerup-app.vercel.app
+    - https://www.dinerop.com
