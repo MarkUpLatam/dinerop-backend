@@ -29,7 +29,7 @@ public class SecurityConfig {
     private final CustomUserDetailsService userDetailsService;
     private final PasswordEncoder passwordEncoder;
 
-    @Value("${cors.allowed-origins:http://localhost:5173,http://localhost:5174}")
+    @Value("${cors.allowed-origins:http://localhost:5173,http://localhost:5174,https://www.dinerop.com/}")
     private List<String> allowedOrigins;
 
     private static final String[] PUBLIC_ENDPOINTS = {
