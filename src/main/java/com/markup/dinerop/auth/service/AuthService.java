@@ -8,6 +8,7 @@ import com.markup.dinerop.auth.entity.User;
 import com.markup.dinerop.auth.exception.AccountNotActiveException;
 import com.markup.dinerop.auth.repository.ActivationTokenRepository;
 import com.markup.dinerop.auth.repository.UserRepository;
+import com.markup.dinerop.notification.service.NotificationService;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,13 +18,13 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import jakarta.transaction.Transactional;
-//import com.markup.sharedevents.UserRegisteredEventV1;
+
 
 import com.markup.dinerop.auth.entity.PasswordResetToken;
 import com.markup.dinerop.auth.repository.PasswordResetTokenRepository;
 import com.markup.dinerop.auth.dto.ForgotPasswordRequest;
 import com.markup.dinerop.auth.dto.ResetPasswordRequest;
-//import com.markup.dinerop.auth.dto.event.PasswordResetRequestedEvent;
+
 
 
 
@@ -44,28 +45,8 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
     private final JwtService jwtService;
-    //private final RabbitTemplate rabbitTemplate;
     private final PasswordResetTokenRepository passwordResetTokenRepository;
-    //private final CreditInternalClient creditInternalClient;
-
-
-
-
-    // =========================================================
-    // EVENTO AUXILIAR PARA PUBLICAR EVENTO
-    // =========================================================
-    /*private void publishActivationEvent(User user, String token) {
-        rabbitTemplate.convertAndSend(
-                "auth.exchange",
-                "auth.user.activation",
-                new UserRegisteredEventV1(
-                        user.getIdUser(),
-                        user.getEmail(),
-                        user.getRole().name(),
-                        token
-                )
-        );
-    }*/
+    private final NotificationService notificationService;
 
 
 
@@ -140,12 +121,11 @@ public class AuthService {
         activationTokenRepository.save(newToken);
 
         // =============================
-        // Publicacion del evento
+        // Enviar correo
         // =============================
 
 
-        //publishActivationEvent(savedUser, tokenValue);
-
+        notificationService.sendActivationEmail(savedUser.getEmail(), tokenValue);
 
         log.info("New activation token generated for {}", savedUser.getEmail());
 
@@ -242,11 +222,6 @@ public class AuthService {
 
         userRepository.save(user);
 
-        Long clientId = user.getIdUser();
-        String userEmail = user.getEmail();
-
-       // int updated = creditInternalClient.linkClientByEmail(userEmail, clientId);
-       // log.info("Credit requests vinculadas: {} para email={}", updated, email);
 
     }
 
@@ -301,16 +276,9 @@ public class AuthService {
 
         passwordResetTokenRepository.save(resetToken);
 
-        // 5. Publicar evento correcto
-        /*rabbitTemplate.convertAndSend(
-                "auth.exchange",
-                "auth.user.password.reset",
-                new PasswordResetRequestedEvent(
-                        user.getEmail(),
-                        tokenValue,
-                        expiresAt
-                )
-        );*/
+        //envio de correo
+        notificationService.sendResetPasswordEmail(user.getEmail(), tokenValue);
+
 
         log.info("Password reset token generated for {}", email);
     }

@@ -32,3 +32,10 @@ cors:
     - https://dinerop.com
     - https://markup-landing.vercel.app
     - https://dinerup-app.vercel.app
+
+resend:
+  api-key: ${RESEND_API_KEY}
+  from-email: onboarding@resend.dev
+
+app:
+  frontend-url: ${FRONTEND_URL}
