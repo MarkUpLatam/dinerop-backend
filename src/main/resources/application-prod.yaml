@@ -35,7 +35,7 @@ cors:
 
 resend:
   api-key: ${RESEND_API_KEY}
-  from-email: onboarding@resend.dev
+  from-email: dinerop@dinerop.com
 
 app:
   frontend-url: ${FRONTEND_URL}
