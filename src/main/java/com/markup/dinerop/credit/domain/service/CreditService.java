@@ -7,6 +7,7 @@ import com.markup.dinerop.credit.domain.model.SolicitudCooperativa;
 import com.markup.dinerop.credit.domain.model.enums.CreditRequestStatus;
 import com.markup.dinerop.credit.domain.model.enums.CreditRequestType;
 import com.markup.dinerop.credit.domain.model.enums.SolicitudCooperativaStatus;
+import com.markup.dinerop.credit.dto.ClientCreditRequestDto;
 import com.markup.dinerop.credit.dto.PublicCreditRequestDto;
 import com.markup.dinerop.credit.infrastructure.repository.CreditRequestRepository;
 import com.markup.dinerop.credit.infrastructure.repository.SolicitudCooperativaRepository;
@@ -34,7 +35,7 @@ public class CreditService {
 
 
     // =========================
-    // Solicitud pÃºblica loging dinerup
+    // Solicitud publica loging dinerup
     // =========================
 
     @Transactional
@@ -91,6 +92,41 @@ public class CreditService {
         return request.getId();
     }
 
+
+    // =========================
+    // Solicitud desde cliente autenticado
+    // =========================
+
+    @Transactional
+    public Long createAuthenticatedRequest(ClientCreditRequestDto dto, Long clientId, String email) {
+
+        // Validaciones de dominio
+        if (dto.getType() == CreditRequestType.CREDITO && dto.getCreditType() == null) {
+            throw new IllegalArgumentException("CREDIT_TYPE_REQUIRED_FOR_CREDITO");
+        }
+
+        if (dto.getType() == CreditRequestType.INVERSION && dto.getCreditType() != null) {
+            throw new IllegalArgumentException("CREDIT_TYPE_NOT_ALLOWED_FOR_INVERSION");
+        }
+
+        CreditRequest request = CreditRequest.builder()
+                .clientId(clientId)
+                .email(email)
+                .identification("")
+                .amount(dto.getMonto())
+                .tipo(dto.getType())
+                .creditType(
+                        dto.getType() == CreditRequestType.CREDITO
+                                ? dto.getCreditType()
+                                : null
+                )
+                .plazoMeses(dto.getPlazoMeses())
+                .estado(CreditRequestStatus.CREADA)
+                .build();
+
+        creditRequestRepository.save(request);
+        return request.getId();
+    }
 
     // =========================
     // Vincular solicitud con cliente.

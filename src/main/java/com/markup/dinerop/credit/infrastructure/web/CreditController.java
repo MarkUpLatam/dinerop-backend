@@ -5,6 +5,7 @@ import com.markup.dinerop.credit.domain.service.*;
 import com.markup.dinerop.credit.dto.ClientCreditResponseDto;
 import com.markup.dinerop.credit.dto.CooperativeDecisionRequestDto;
 import com.markup.dinerop.credit.dto.CooperativeStatusItemDto;
+import com.markup.dinerop.credit.dto.ClientCreditRequestDto;
 import com.markup.dinerop.credit.dto.PublicCreditRequestDto;
 import org.springframework.security.access.prepost.PreAuthorize;
 import lombok.RequiredArgsConstructor;
@@ -45,6 +46,23 @@ public class CreditController {
         );
     }
 
+
+    @PostMapping("/me")
+    @PreAuthorize("hasRole('CLIENT')")
+    public ResponseEntity<?> createMyRequest(
+            @Valid @RequestBody ClientCreditRequestDto dto,
+            @AuthenticationPrincipal User user
+    ) {
+        Long requestId = creditService.createAuthenticatedRequest(
+                dto, user.getIdUser(), user.getEmail()
+        );
+        return ResponseEntity.ok(
+                Map.of(
+                        "requestId", requestId,
+                        "message", "Solicitud creada correctamente"
+                )
+        );
+    }
 
     @GetMapping("/me")
     public ResponseEntity<ClientCreditResponseDto> getMyCredits(@AuthenticationPrincipal User user) {
