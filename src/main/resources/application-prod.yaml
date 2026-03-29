@@ -33,11 +33,7 @@ logging:
     root: warn
 
 cors:
-  allowed-origins:
-    - https://www.dinerop.com
-    - https://dinerop.com
-    - https://markup-landing.vercel.app
-    - https://dinerup-app.vercel.app
+  allowed-origins: https://www.dinerop.com,https://dinerop.com,https://markup-landing.vercel.app,https://dinerup-app.vercel.app
 
 resend:
   api-key: ${RESEND_API_KEY}

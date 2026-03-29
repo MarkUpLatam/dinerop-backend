@@ -29,8 +29,8 @@ public class SecurityConfig {
     private final CustomUserDetailsService userDetailsService;
     private final PasswordEncoder passwordEncoder;
 
-    @Value("${cors.allowed-origins:http://localhost:5173,http://localhost:5174,https://www.dinerop.com/}")
-    private List<String> allowedOrigins;
+    @Value("${CORS_ALLOWED_ORIGINS:http://localhost:5173,http://localhost:5174,https://www.dinerop.com,https://dinerop.com,https://markup-landing.vercel.app,https://dinerup-app.vercel.app}")
+    private String allowedOriginsRaw;
 
     private static final String[] PUBLIC_ENDPOINTS = {
             "/api/auth/**",
@@ -76,6 +76,7 @@ public class SecurityConfig {
 
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
+        List<String> allowedOrigins = List.of(allowedOriginsRaw.split(","));
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowedOrigins(allowedOrigins);
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
