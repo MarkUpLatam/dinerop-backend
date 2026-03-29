@@ -136,13 +136,22 @@ public class AuthService {
 
 
     // =========================================================
+    // OBTENER EMAIL POR CLIENT ID
+    // =========================================================
+    public String getEmailByClientId(Long clientId) {
+        return userRepository.findById(clientId)
+                .orElseThrow(() -> new RuntimeException("USER_NOT_FOUND"))
+                .getEmail();
+    }
+
+    // =========================================================
     // LOGIN
     // =========================================================
     public LoginResponse login(LoginRequest request) {
 
 
         User user = userRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new RuntimeException("Credenciales invÃ¡lidas"));
+                .orElseThrow(() -> new RuntimeException("Credenciales invalidas"));
 
 
         if (!user.isEnabled()) {

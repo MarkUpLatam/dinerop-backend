@@ -184,6 +184,13 @@ public class CreditService {
     @Transactional
     public int completeOnboardingAndDispatch(Long clientId) {
 
+        // Vincular email → clientId antes de buscar solicitudes
+        // (necesario cuando la solicitud fue creada de forma pública sin clientId)
+        creditRequestRepository.linkClientIdByEmail(
+                authService.getEmailByClientId(clientId),
+                clientId
+        );
+
         List<CreditRequest> createdRequests =
                 creditRequestRepository.findByClientIdAndEstado(clientId, CreditRequestStatus.CREADA);
 

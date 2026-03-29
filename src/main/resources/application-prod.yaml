@@ -16,10 +16,16 @@ spring:
 
 server:
   port: ${PORT:8080}
+  tomcat:
+    threads:
+      max: 20
+      min-spare: 5
+    max-connections: 100
+    accept-count: 50
 
 jwt:
   secret: ${JWT_SECRET}
-  expiration: ${JWT_EXPIRATION:86400000}
+  expiration: ${JWT_EXPIRATION:28800000}
 
 logging:
   level:
