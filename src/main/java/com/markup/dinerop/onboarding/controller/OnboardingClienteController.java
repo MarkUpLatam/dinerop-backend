@@ -6,6 +6,7 @@ import com.markup.dinerop.onboarding.application.usecase.CrearSolicitudConSolici
 import com.markup.dinerop.onboarding.application.usecase.ObtenerOnboardingUnificadoUseCase;
 import com.markup.dinerop.onboarding.dto.request.PersonaOnboardingRequest;
 import com.markup.dinerop.onboarding.dto.request.SolicitudOnboardingRequest;
+import com.markup.dinerop.onboarding.dto.response.FormularioClienteStatusResponse;
 import com.markup.dinerop.onboarding.dto.response.OnboardingUnificadoResponse;
 import com.markup.dinerop.onboarding.dto.response.SolicitudOnboardingResponse;
 import com.markup.dinerop.onboarding.infrastructure.mapper.OnboardingMapper;
@@ -27,6 +28,7 @@ public class OnboardingClienteController {
     private final ObtenerOnboardingUnificadoUseCase obtenerOnboardingUC;
     private final CompletarFormularioGaranteUseCase completarGaranteUC;
     private final OnboardingMapper mapper;
+    private final com.markup.dinerop.onboarding.application.service.OnboardingService onboardingService;
 
     @PostMapping("/solicitante")
     @ResponseStatus(HttpStatus.CREATED)
@@ -62,5 +64,13 @@ public class OnboardingClienteController {
         return mapper.toOnboardingUnificadoResponse(
                 obtenerOnboardingUC.execute(solicitudId)
         );
+    }
+
+    @GetMapping("/formulario-status")
+    @PreAuthorize("hasRole('CLIENT')")
+    public FormularioClienteStatusResponse getFormularioStatus(
+            @AuthenticationPrincipal User user
+    ) {
+        return onboardingService.getFormularioClienteStatus(user.getIdUser());
     }
 }

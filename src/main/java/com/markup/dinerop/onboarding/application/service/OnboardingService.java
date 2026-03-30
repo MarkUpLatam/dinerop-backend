@@ -3,6 +3,7 @@ package com.markup.dinerop.onboarding.application.service;
 import com.markup.dinerop.onboarding.domain.entity.SolicitudOnboarding;
 import com.markup.dinerop.onboarding.dto.request.PersonaOnboardingRequest;
 import com.markup.dinerop.onboarding.dto.request.SolicitudOnboardingRequest;
+import com.markup.dinerop.onboarding.dto.response.FormularioClienteStatusResponse;
 
 public interface OnboardingService {
 
@@ -19,4 +20,6 @@ public interface OnboardingService {
     );
 
     SolicitudOnboarding obtenerOnboardingUnificado(Long solicitudId);
+
+    FormularioClienteStatusResponse getFormularioClienteStatus(Long usuarioId);
 }

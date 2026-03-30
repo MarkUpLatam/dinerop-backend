@@ -8,6 +8,7 @@ import com.markup.dinerop.onboarding.domain.enums.EstadoOnboarding;
 import com.markup.dinerop.onboarding.domain.enums.RolPersona;
 import com.markup.dinerop.onboarding.dto.request.PersonaOnboardingRequest;
 import com.markup.dinerop.onboarding.dto.request.SolicitudOnboardingRequest;
+import com.markup.dinerop.onboarding.dto.response.FormularioClienteStatusResponse;
 import com.markup.dinerop.onboarding.exception.BusinessException;
 import com.markup.dinerop.onboarding.exception.ResourceNotFoundException;
 import com.markup.dinerop.onboarding.infrastructure.mapper.OnboardingMapper;
@@ -137,6 +138,27 @@ public class OnboardingServiceImpl implements OnboardingService {
     public SolicitudOnboarding obtenerOnboardingUnificado(Long solicitudId) {
         return solicitudRepo.findById(solicitudId)
                 .orElseThrow(() -> new ResourceNotFoundException("Solicitud no encontrada"));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public FormularioClienteStatusResponse getFormularioClienteStatus(Long usuarioId) {
+        return solicitudRepo.findByUsuarioId(usuarioId)
+                .map(solicitud -> {
+                    EstadoFormulario estado = solicitud.getPersonas().stream()
+                            .filter(p -> p.getRol() == RolPersona.SOLICITANTE)
+                            .map(PersonaOnboarding::getEstadoFormulario)
+                            .findFirst()
+                            .orElse(EstadoFormulario.PENDIENTE);
+                    return FormularioClienteStatusResponse.builder()
+                            .formularioCompleto(estado == EstadoFormulario.COMPLETO)
+                            .estadoFormulario(estado)
+                            .build();
+                })
+                .orElse(FormularioClienteStatusResponse.builder()
+                        .formularioCompleto(false)
+                        .estadoFormulario(EstadoFormulario.PENDIENTE)
+                        .build());
     }
 
     private void linkPersonaRelations(PersonaOnboarding persona, PersonaOnboardingRequest request) {
