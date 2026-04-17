@@ -7,6 +7,9 @@ WORKDIR /app
 COPY .mvn/ .mvn/
 COPY mvnw pom.xml ./
 
+# Dar permisos de ejecución al wrapper (necesario cuando viene de Windows)
+RUN chmod +x mvnw
+
 # Descarga dependencias sin compilar el código fuente (se cachea si pom no cambia)
 RUN ./mvnw dependency:go-offline -B
 
