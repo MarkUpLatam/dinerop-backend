@@ -32,6 +32,9 @@ public class SecurityConfig {
     @Value("${CORS_ALLOWED_ORIGINS:http://localhost:5173,http://localhost:5174,https://www.dinerop.com,https://dinerop.com,https://markup-landing.vercel.app,https://dinerup-app.vercel.app}")
     private String allowedOriginsRaw;
 
+    // Dominio desde el que Railway lanza el healthcheck — debe estar permitido
+    private static final String RAILWAY_HEALTHCHECK_HOST = "healthcheck.railway.app";
+
     private static final String[] PUBLIC_ENDPOINTS = {
             "/api/auth/**",
             "/api/cooperatives/**",
@@ -77,7 +80,12 @@ public class SecurityConfig {
 
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
-        List<String> allowedOrigins = List.of(allowedOriginsRaw.split(","));
+        // Orígenes del frontend
+        List<String> allowedOrigins = new java.util.ArrayList<>(List.of(allowedOriginsRaw.split(",")));
+        // Agrega el host de Railway healthcheck para que no sea bloqueado
+        allowedOrigins.add("https://" + RAILWAY_HEALTHCHECK_HOST);
+        allowedOrigins.add("http://" + RAILWAY_HEALTHCHECK_HOST);
+
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowedOrigins(allowedOrigins);
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
