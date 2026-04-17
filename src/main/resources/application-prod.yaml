@@ -5,7 +5,7 @@ spring:
     password: ${DB_PASSWORD}
     driver-class-name: org.postgresql.Driver
     hikari:
-      maximum-pool-size: 3
+      maximum-pool-size: 3        # reducido — cada conexión consume ~5MB
       minimum-idle: 1
       idle-timeout: 30000
       connection-timeout: 30000
@@ -24,7 +24,7 @@ spring:
         format_sql: false
         dialect: org.hibernate.dialect.PostgreSQLDialect
         jdbc:
-          batch_size: 20
+          batch_size: 10          # reducido de 20 → 10
         order_inserts: true
         order_updates: true
         generate_statistics: false
@@ -33,25 +33,22 @@ server:
   port: ${PORT:8080}
   tomcat:
     threads:
-      max: 50
-      min-spare: 10
-    max-connections: 200
-    accept-count: 100
+      max: 20                     # reducido de 50 → 20 (cada thread ~1MB de stack)
+      min-spare: 5                # reducido de 10 → 5
+    max-connections: 100          # reducido de 200 → 100
+    accept-count: 50
     connection-timeout: 20000
 
 jwt:
   secret: ${JWT_SECRET}
   expiration: ${JWT_EXPIRATION:28800000}
 
-# DEBUG temporalmente para ver el error exacto en Railway logs
 logging:
   level:
-    root: info
-    com.markup.dinerop: debug
-    org.springframework.boot: info
-    org.springframework.web: info
+    root: warn
+    com.markup.dinerop: info
     org.hibernate.SQL: warn
-    com.zaxxer.hikari: info
+    com.zaxxer.hikari: warn
 
 cors:
   allowed-origins: https://www.dinerop.com,https://dinerop.com,https://markup-landing.vercel.app,https://dinerup-app.vercel.app
@@ -70,4 +67,4 @@ management:
         include: health
   endpoint:
     health:
-      show-details: always
+      show-details: never
