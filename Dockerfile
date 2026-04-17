@@ -29,19 +29,9 @@ USER spring
 # Copia solo el JAR final
 COPY --from=builder /app/target/*.jar app.jar
 
-# Flags JVM optimizadas para contenedores Railway (1 vCPU / 1 GB RAM)
-# - UseContainerSupport: respeta los límites del contenedor
-# - MaxRAMPercentage=70: usa hasta 70% de la RAM asignada para el heap
-# - TieredStopAtLevel=1: arranca MÁS RÁPIDO (sin JIT completo al inicio)
-# - SerialGC: menos overhead que G1GC para contenedores pequeños
-ENV JAVA_OPTS="-XX:+UseContainerSupport \
-               -XX:MaxRAMPercentage=70.0 \
-               -XX:InitialRAMPercentage=30.0 \
-               -XX:TieredStopAtLevel=1 \
-               -XX:+UseSerialGC \
-               -Djava.security.egd=file:/dev/./urandom \
-               -Dspring.profiles.active=prod"
-
 EXPOSE 8080
 
-ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -jar app.jar"]
+# Las flags JVM se configuran desde JAVA_TOOL_OPTIONS en Railway Variables
+# para poder cambiarlas sin redeploy.
+# Solo forzamos el perfil de Spring aquí.
+ENTRYPOINT ["java", "-Dspring.profiles.active=prod", "-Djava.security.egd=file:/dev/./urandom", "-jar", "app.jar"]

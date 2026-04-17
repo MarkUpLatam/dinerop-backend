@@ -5,20 +5,17 @@ spring:
     password: ${DB_PASSWORD}
     driver-class-name: org.postgresql.Driver
     hikari:
-      maximum-pool-size: 5
-      minimum-idle: 2
+      maximum-pool-size: 3
+      minimum-idle: 1
       idle-timeout: 30000
-      connection-timeout: 20000
+      connection-timeout: 30000
       max-lifetime: 1200000
       pool-name: DineropHikariPool
-      # Validar conexión antes de usarla (evita errores si la BD cierra la conexión)
       connection-test-query: SELECT 1
       keepalive-time: 30000
 
   jpa:
     hibernate:
-      # validate: solo verifica el esquema, no lo modifica → arranque mucho más rápido
-      # update: úsalo solo cuando agregues tablas/columnas nuevas, luego vuelve a validate
       ddl-auto: update
     show-sql: false
     open-in-view: false
@@ -30,12 +27,10 @@ spring:
           batch_size: 20
         order_inserts: true
         order_updates: true
-        # Reduce tiempo de arranque: no genera estadísticas
         generate_statistics: false
 
 server:
   port: ${PORT:8080}
-  # Tiempo que Railway espera antes del healthcheck (~60s para que Spring Boot arranque)
   tomcat:
     threads:
       max: 50
@@ -48,15 +43,15 @@ jwt:
   secret: ${JWT_SECRET}
   expiration: ${JWT_EXPIRATION:28800000}
 
+# DEBUG temporalmente para ver el error exacto en Railway logs
 logging:
   level:
-    # info en root para VER errores de arranque en los logs de Railway
     root: info
-    # silenciamos los más verbosos
+    com.markup.dinerop: debug
+    org.springframework.boot: info
+    org.springframework.web: info
     org.hibernate.SQL: warn
-    org.hibernate.type: warn
-    com.zaxxer.hikari: warn
-    org.springframework.web: warn
+    com.zaxxer.hikari: info
 
 cors:
   allowed-origins: https://www.dinerop.com,https://dinerop.com,https://markup-landing.vercel.app,https://dinerup-app.vercel.app
@@ -75,12 +70,4 @@ management:
         include: health
   endpoint:
     health:
-      show-details: never
-      # Healthcheck responde aunque la BD tarde en conectar
-      probes:
-        enabled: true
-  health:
-    db:
-      enabled: true
-    diskspace:
-      enabled: false
+      show-details: always

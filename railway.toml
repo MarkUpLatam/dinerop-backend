@@ -1,6 +1,4 @@
 [deploy]
-healthcheckPath = "/actuator/health"
-# 120 segundos para que Spring Boot arranque antes de que Railway declare fallo
-healthcheckTimeout = 120
+# Sin healthcheck por ahora — permite que el contenedor levante sin timeout
 restartPolicyType = "ON_FAILURE"
 restartPolicyMaxRetries = 3
