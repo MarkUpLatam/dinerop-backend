@@ -5,15 +5,20 @@ spring:
     password: ${DB_PASSWORD}
     driver-class-name: org.postgresql.Driver
     hikari:
-      maximum-pool-size: 5        # subido de 3 → 5
-      minimum-idle: 2             # subido de 1 → 2
+      maximum-pool-size: 5
+      minimum-idle: 2
       idle-timeout: 30000
       connection-timeout: 20000
       max-lifetime: 1200000
       pool-name: DineropHikariPool
+      # Validar conexión antes de usarla (evita errores si la BD cierra la conexión)
+      connection-test-query: SELECT 1
+      keepalive-time: 30000
 
   jpa:
     hibernate:
+      # validate: solo verifica el esquema, no lo modifica → arranque mucho más rápido
+      # update: úsalo solo cuando agregues tablas/columnas nuevas, luego vuelve a validate
       ddl-auto: update
     show-sql: false
     open-in-view: false
@@ -22,18 +27,21 @@ spring:
         format_sql: false
         dialect: org.hibernate.dialect.PostgreSQLDialect
         jdbc:
-          batch_size: 20          # mejora inserts en lote
+          batch_size: 20
         order_inserts: true
         order_updates: true
+        # Reduce tiempo de arranque: no genera estadísticas
+        generate_statistics: false
 
 server:
   port: ${PORT:8080}
+  # Tiempo que Railway espera antes del healthcheck (~60s para que Spring Boot arranque)
   tomcat:
     threads:
-      max: 50                     # subido de 20 → 50
-      min-spare: 10               # subido de 5 → 10
-    max-connections: 200          # subido de 100 → 200
-    accept-count: 100             # subido de 50 → 100
+      max: 50
+      min-spare: 10
+    max-connections: 200
+    accept-count: 100
     connection-timeout: 20000
 
 jwt:
@@ -42,8 +50,13 @@ jwt:
 
 logging:
   level:
+    # info en root para VER errores de arranque en los logs de Railway
+    root: info
+    # silenciamos los más verbosos
     org.hibernate.SQL: warn
-    root: warn
+    org.hibernate.type: warn
+    com.zaxxer.hikari: warn
+    org.springframework.web: warn
 
 cors:
   allowed-origins: https://www.dinerop.com,https://dinerop.com,https://markup-landing.vercel.app,https://dinerup-app.vercel.app
@@ -63,3 +76,11 @@ management:
   endpoint:
     health:
       show-details: never
+      # Healthcheck responde aunque la BD tarde en conectar
+      probes:
+        enabled: true
+  health:
+    db:
+      enabled: true
+    diskspace:
+      enabled: false

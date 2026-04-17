@@ -29,12 +29,16 @@ USER spring
 # Copia solo el JAR final
 COPY --from=builder /app/target/*.jar app.jar
 
-# Configuración JVM optimizada para contenedores con poca RAM (Railway free tier)
+# Flags JVM optimizadas para contenedores Railway (1 vCPU / 1 GB RAM)
+# - UseContainerSupport: respeta los límites del contenedor
+# - MaxRAMPercentage=70: usa hasta 70% de la RAM asignada para el heap
+# - TieredStopAtLevel=1: arranca MÁS RÁPIDO (sin JIT completo al inicio)
+# - SerialGC: menos overhead que G1GC para contenedores pequeños
 ENV JAVA_OPTS="-XX:+UseContainerSupport \
-               -XX:MaxRAMPercentage=75.0 \
-               -XX:InitialRAMPercentage=50.0 \
-               -XX:+UseG1GC \
-               -XX:MaxGCPauseMillis=200 \
+               -XX:MaxRAMPercentage=70.0 \
+               -XX:InitialRAMPercentage=30.0 \
+               -XX:TieredStopAtLevel=1 \
+               -XX:+UseSerialGC \
                -Djava.security.egd=file:/dev/./urandom \
                -Dspring.profiles.active=prod"
 
