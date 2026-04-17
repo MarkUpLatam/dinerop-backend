@@ -61,11 +61,12 @@
             <optional>true</optional>
         </dependency>
 
-        <!-- DEVTOOLS -->
+        <!-- DEVTOOLS (solo local, excluido del JAR final) -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-devtools</artifactId>
             <scope>runtime</scope>
+            <optional>true</optional>
         </dependency>
 
         <!-- JWT -->
@@ -132,6 +133,14 @@
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
+                <configuration>
+                    <!-- Excluye devtools del JAR de producción -->
+                    <excludeDevtools>true</excludeDevtools>
+                    <!-- Usa layers para mejor cache en Docker -->
+                    <layers>
+                        <enabled>true</enabled>
+                    </layers>
+                </configuration>
             </plugin>
 
             <plugin>

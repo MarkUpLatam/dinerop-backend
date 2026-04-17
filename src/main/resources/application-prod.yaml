@@ -5,11 +5,12 @@ spring:
     password: ${DB_PASSWORD}
     driver-class-name: org.postgresql.Driver
     hikari:
-      maximum-pool-size: 3
-      minimum-idle: 1
+      maximum-pool-size: 5        # subido de 3 → 5
+      minimum-idle: 2             # subido de 1 → 2
       idle-timeout: 30000
       connection-timeout: 20000
       max-lifetime: 1200000
+      pool-name: DineropHikariPool
 
   jpa:
     hibernate:
@@ -20,15 +21,20 @@ spring:
       hibernate:
         format_sql: false
         dialect: org.hibernate.dialect.PostgreSQLDialect
+        jdbc:
+          batch_size: 20          # mejora inserts en lote
+        order_inserts: true
+        order_updates: true
 
 server:
   port: ${PORT:8080}
   tomcat:
     threads:
-      max: 20
-      min-spare: 5
-    max-connections: 100
-    accept-count: 50
+      max: 50                     # subido de 20 → 50
+      min-spare: 10               # subido de 5 → 10
+    max-connections: 200          # subido de 100 → 200
+    accept-count: 100             # subido de 50 → 100
+    connection-timeout: 20000
 
 jwt:
   secret: ${JWT_SECRET}
