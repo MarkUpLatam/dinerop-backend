@@ -8,6 +8,8 @@ import com.markup.dinerop.auth.entity.User;
 import com.markup.dinerop.auth.exception.AccountNotActiveException;
 import com.markup.dinerop.auth.repository.ActivationTokenRepository;
 import com.markup.dinerop.auth.repository.UserRepository;
+import com.markup.dinerop.auth.entity.UserPreRegistration;
+import com.markup.dinerop.auth.repository.UserPreRegistrationRepository;
 import com.markup.dinerop.notification.service.NotificationService;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
@@ -47,6 +49,7 @@ public class AuthService {
     private final JwtService jwtService;
     private final PasswordResetTokenRepository passwordResetTokenRepository;
     private final NotificationService notificationService;
+    private final UserPreRegistrationRepository userPreRegistrationRepository;
 
 
 
@@ -134,6 +137,43 @@ public class AuthService {
     }
 
 
+
+    // =========================================================
+    // REGISTRO PÚBLICO SIN CRÉDITO
+    // =========================================================
+    @Transactional
+    public PublicRegistrationResponse publicRegister(PublicRegistrationRequest request) {
+
+        String normalizedEmail = request.getEmail().toLowerCase().trim();
+        log.info("[PUBLIC_REGISTER] Inicio | email={}", normalizedEmail);
+
+        // Reutiliza toda la lógica: crear user PENDING_ACTIVATION + token + correo
+        preRegister(normalizedEmail, Role.CLIENT);
+
+        User user = userRepository.findByEmail(normalizedEmail)
+                .orElseThrow(() -> new RuntimeException("USER_NOT_FOUND"));
+
+        // UPSERT del perfil de pre-registro
+        UserPreRegistration preReg = userPreRegistrationRepository
+                .findByUserId(user.getIdUser())
+                .orElse(UserPreRegistration.builder().userId(user.getIdUser()).build());
+
+        preReg.setFirstName(request.getFirstName());
+        preReg.setLastName(request.getLastName());
+        preReg.setIdentification(request.getIdentification());
+        preReg.setPhone(request.getPhone());
+        preReg.setProvince(request.getProvince());
+        preReg.setCity(request.getCity());
+
+        userPreRegistrationRepository.save(preReg);
+
+        log.info("[PUBLIC_REGISTER] OK | userId={} email={}", user.getIdUser(), normalizedEmail);
+
+        return PublicRegistrationResponse.builder()
+                .email(normalizedEmail)
+                .message("Registro iniciado. Revisa tu correo para activar la cuenta.")
+                .build();
+    }
 
     // =========================================================
     // OBTENER EMAIL POR CLIENT ID

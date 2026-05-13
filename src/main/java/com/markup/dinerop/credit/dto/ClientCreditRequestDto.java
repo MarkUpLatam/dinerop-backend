@@ -15,4 +15,8 @@ public class ClientCreditRequestDto {
     private CreditRequestType type;
     private CreditType creditType; // null si type == INVERSION
     private Integer plazoMeses;    // opcional
+
+    // Ubicacion (necesaria para distribuir a cooperativas elegibles)
+    private String province;
+    private String city;
 }

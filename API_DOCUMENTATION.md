@@ -339,7 +339,8 @@ Crea una solicitud de crédito pública (sin autenticación).
 
 ### POST `/api/credits/me`
 
-Crea una solicitud de crédito para el cliente autenticado.
+Crea una solicitud de crédito para el cliente autenticado (ya registrado en la plataforma).
+A diferencia de la solicitud pública, esta se **distribuye inmediatamente** a las cooperativas elegibles de la ciudad indicada (no requiere completar onboarding previamente).
 
 **Auth required:** Yes — `CLIENT` role
 
@@ -349,11 +350,15 @@ Crea una solicitud de crédito para el cliente autenticado.
   "monto": 5000.00,
   "type": "CREDITO | INVERSION",
   "creditType": "CONSUMO",
-  "plazoMeses": 12
+  "plazoMeses": 12,
+  "province": "Pichincha",
+  "city": "Quito"
 }
 ```
 
-> `creditType` es `null` cuando `type == INVERSION`.
+> - `creditType` debe enviarse cuando `type == CREDITO` y debe ser `null` cuando `type == INVERSION`.
+> - `plazoMeses` opcional; si se envía debe estar entre `1` y `360`.
+> - `province` y `city` son usados para identificar las cooperativas elegibles a las que se distribuirá la solicitud.
 
 **Response `200`:**
 ```json
@@ -362,6 +367,19 @@ Crea una solicitud de crédito para el cliente autenticado.
   "message": "Solicitud creada correctamente"
 }
 ```
+
+**Errores comunes:**
+
+| Código / Mensaje | Causa |
+|---|---|
+| `EXISTING_ACTIVE_REQUEST` | El cliente ya tiene una solicitud en estado `CREADA` activa. |
+| `CREDIT_TYPE_REQUIRED_FOR_CREDITO` | `type == CREDITO` y no se envió `creditType`. |
+| `CREDIT_TYPE_NOT_ALLOWED_FOR_INVERSION` | `type == INVERSION` y se envió `creditType`. |
+| `INVALID_PLAZO_MESES` | `plazoMeses` fuera del rango 1–360. |
+
+**Comportamiento interno:**
+- Si existen cooperativas elegibles para la ciudad y monto, se crean filas `solicitud_cooperativa` (estado `ENVIADA`) y la solicitud pasa a `ENVIADA`.
+- Si no hay cooperativas elegibles, la solicitud queda en `CREADA` (no se distribuye).
 
 ---
 

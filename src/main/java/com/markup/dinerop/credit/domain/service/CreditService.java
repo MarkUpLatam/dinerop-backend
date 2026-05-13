@@ -97,10 +97,25 @@ public class CreditService {
     // Solicitud desde cliente autenticado
     // =========================
 
-    @Transactional
-    public Long createAuthenticatedRequest(ClientCreditRequestDto dto, Long clientId, String email) {
+    public record AuthenticatedRequestResult(
+            Long requestId,
+            CreditRequestStatus estado,
+            int cooperativasNotificadas
+    ) {}
 
-        // Validaciones de dominio
+    @Transactional
+    public AuthenticatedRequestResult createAuthenticatedRequest(ClientCreditRequestDto dto, Long clientId, String email) {
+
+        // 1. Validar que no exista solicitud activa para este cliente
+        boolean exists = !creditRequestRepository
+                .findByClientIdAndEstado(clientId, CreditRequestStatus.CREADA)
+                .isEmpty();
+
+        if (exists) {
+            throw new IllegalStateException("EXISTING_ACTIVE_REQUEST");
+        }
+
+        // 2. Validaciones de dominio
         if (dto.getType() == CreditRequestType.CREDITO && dto.getCreditType() == null) {
             throw new IllegalArgumentException("CREDIT_TYPE_REQUIRED_FOR_CREDITO");
         }
@@ -109,11 +124,19 @@ public class CreditService {
             throw new IllegalArgumentException("CREDIT_TYPE_NOT_ALLOWED_FOR_INVERSION");
         }
 
+        if (dto.getPlazoMeses() != null &&
+                (dto.getPlazoMeses() < 1 || dto.getPlazoMeses() > 360)) {
+            throw new IllegalArgumentException("INVALID_PLAZO_MESES");
+        }
+
+        // 3. Persistir solicitud_credito ya vinculada al cliente
         CreditRequest request = CreditRequest.builder()
                 .clientId(clientId)
                 .email(email)
                 .identification("")
                 .amount(dto.getMonto())
+                .province(dto.getProvince())
+                .city(dto.getCity())
                 .tipo(dto.getType())
                 .creditType(
                         dto.getType() == CreditRequestType.CREDITO
@@ -125,7 +148,42 @@ public class CreditService {
                 .build();
 
         creditRequestRepository.save(request);
-        return request.getId();
+
+        // 4. Intentar distribuir
+        int distributed = 0;
+        boolean tieneUbicacion =
+                (dto.getCity() != null && !dto.getCity().isBlank())
+                        || (dto.getProvince() != null && !dto.getProvince().isBlank());
+
+        if (tieneUbicacion) {
+            distributed = creditDistributionService.distributeToCityCooperatives(request);
+        }
+
+        // 5. Reglas de estado:
+        //    - Si hay distribuciones: ENVIADA (flujo feliz)
+        //    - Si NO hay distribuciones pero la solicitud trae ubicación válida: ENVIADA igualmente,
+        //      ya que el cliente sí envió la solicitud; quedará a la espera de cooperativas elegibles.
+        //    - Si la solicitud no tiene ubicación: se queda en CREADA hasta que el flujo de onboarding
+        //      complete los datos y la distribuya (completeOnboardingAndDispatch).
+        if (distributed > 0 || tieneUbicacion) {
+            request.setEstado(CreditRequestStatus.ENVIADA);
+            creditRequestRepository.save(request);
+            log.info(
+                    "[CREDIT] Authenticated request {} marked as ENVIADA (distributed={}, withLocation={})",
+                    request.getId(), distributed, tieneUbicacion
+            );
+        } else {
+            log.warn(
+                    "[CREDIT] Authenticated request {} stays as CREADA (no location, no distributions)",
+                    request.getId()
+            );
+        }
+
+        return new AuthenticatedRequestResult(
+                request.getId(),
+                request.getEstado(),
+                distributed
+        );
     }
 
     // =========================

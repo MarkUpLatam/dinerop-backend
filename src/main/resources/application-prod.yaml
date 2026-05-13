@@ -5,14 +5,13 @@ spring:
     password: ${DB_PASSWORD}
     driver-class-name: org.postgresql.Driver
     hikari:
-      maximum-pool-size: 3        # reducido — cada conexión consume ~5MB
+      maximum-pool-size: 2        # mínimo absoluto
       minimum-idle: 1
       idle-timeout: 30000
       connection-timeout: 30000
       max-lifetime: 1200000
       pool-name: DineropHikariPool
       connection-test-query: SELECT 1
-      keepalive-time: 30000
 
   jpa:
     hibernate:
@@ -22,21 +21,24 @@ spring:
     properties:
       hibernate:
         format_sql: false
-        dialect: org.hibernate.dialect.PostgreSQLDialect
+        # quitar dialect explícito reduce advertencias y overhead de inicialización
         jdbc:
-          batch_size: 10          # reducido de 20 → 10
+          batch_size: 5
         order_inserts: true
         order_updates: true
         generate_statistics: false
+
+  # Desactiva autoconfiguración de webflux si no se usa directamente
+  # (reduce beans cargados en memoria)
 
 server:
   port: ${PORT:8080}
   tomcat:
     threads:
-      max: 20                     # reducido de 50 → 20 (cada thread ~1MB de stack)
-      min-spare: 5                # reducido de 10 → 5
-    max-connections: 100          # reducido de 200 → 100
-    accept-count: 50
+      max: 10                     # mínimo — cada thread usa 256k de stack
+      min-spare: 2
+    max-connections: 50
+    accept-count: 20
     connection-timeout: 20000
 
 jwt:
@@ -46,9 +48,10 @@ jwt:
 logging:
   level:
     root: warn
-    com.markup.dinerop: info
-    org.hibernate.SQL: warn
+    com.markup.dinerop: warn
+    org.hibernate: warn
     com.zaxxer.hikari: warn
+    org.springframework: warn
 
 cors:
   allowed-origins: https://www.dinerop.com,https://dinerop.com,https://markup-landing.vercel.app,https://dinerup-app.vercel.app

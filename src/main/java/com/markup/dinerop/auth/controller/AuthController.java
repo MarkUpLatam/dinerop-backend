@@ -18,6 +18,18 @@ public class AuthController {
     private final AuthService authService;
 
     // =========================================================
+    // REGISTRO PÚBLICO SIN CRÉDITO
+    // =========================================================
+    @PostMapping("/register")
+    public ResponseEntity<PublicRegistrationResponse> register(
+            @Valid @RequestBody PublicRegistrationRequest request
+    ) {
+        log.info("[REGISTER] email={}", request.getEmail());
+        PublicRegistrationResponse response = authService.publicRegister(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
+    // =========================================================
     // LOGIN
     // =========================================================
     @PostMapping("/login")
@@ -35,7 +47,7 @@ public class AuthController {
     // ACTIVACIÃ“N DE CUENTA (LINK EMAIL)
     // =========================================================
     @GetMapping("/activate")
-    public ResponseEntity<?> activate(@RequestParam("token") String token) {
+    public ResponseEntity<String> activate(@RequestParam("token") String token) {
         log.info("[ACTIVATE] tokenPrefix={}", token.substring(0, Math.min(10, token.length())));
         authService.activateAccount(token);
         return ResponseEntity.ok("Cuenta activada correctamente");
@@ -47,7 +59,7 @@ public class AuthController {
     // =========================================================
 
     @PostMapping("/complete-registration")
-    public ResponseEntity<?> completeRegistration(
+    public ResponseEntity<String> completeRegistration(
             @Valid @RequestBody CompleteRegistrationRequest request
     ) {
         authService.completeRegistration(
@@ -62,7 +74,7 @@ public class AuthController {
     // FORGOT PASSWORD
     // =========================================================
     @PostMapping("/password/forgot")
-    public ResponseEntity<?> forgotPassword(
+    public ResponseEntity<String> forgotPassword(
             @Valid @RequestBody ForgotPasswordRequest request
     ) {
         authService.forgotPassword(request);
@@ -75,12 +87,12 @@ public class AuthController {
     // RESET PASSWORD
     // =========================================================
     @PostMapping("/password/reset")
-    public ResponseEntity<?> resetPassword(
+    public ResponseEntity<String> resetPassword(
             @Valid @RequestBody ResetPasswordRequest request
     ) {
         authService.resetPassword(request);
 
-        return ResponseEntity.ok("ContraseÃ±a actualizada");
+        return ResponseEntity.ok("Contraseña actualizada");
     }
 
 

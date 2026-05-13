@@ -34,7 +34,7 @@ public class CreditController {
 
 
     @PostMapping("/public-request")
-    public ResponseEntity<?> createPublicRequest(
+    public ResponseEntity<Map<String, Object>> createPublicRequest(
             @Valid @RequestBody PublicCreditRequestDto dto
     ) {
         Long requestId = creditService.createPublicRequest(dto);
@@ -49,23 +49,32 @@ public class CreditController {
 
     @PostMapping("/me")
     @PreAuthorize("hasRole('CLIENT')")
-    public ResponseEntity<?> createMyRequest(
+    public ResponseEntity<Map<String, Object>> createMyRequest(
             @Valid @RequestBody ClientCreditRequestDto dto,
             @AuthenticationPrincipal User user
     ) {
-        Long requestId = creditService.createAuthenticatedRequest(
+        CreditService.AuthenticatedRequestResult result = creditService.createAuthenticatedRequest(
                 dto, user.getIdUser(), user.getEmail()
         );
+
+        String message = switch (result.cooperativasNotificadas()) {
+            case 0 -> "Solicitud creada. Aún no hay cooperativas disponibles en tu zona, te notificaremos cuando una pueda atenderte.";
+            case 1 -> "Solicitud enviada a 1 cooperativa de tu zona.";
+            default -> "Solicitud enviada a " + result.cooperativasNotificadas() + " cooperativas de tu zona.";
+        };
+
         return ResponseEntity.ok(
                 Map.of(
-                        "requestId", requestId,
-                        "message", "Solicitud creada correctamente"
+                        "requestId", result.requestId(),
+                        "estado", result.estado(),
+                        "cooperativasNotificadas", result.cooperativasNotificadas(),
+                        "message", message
                 )
         );
     }
 
     @GetMapping("/me")
-    public ResponseEntity<ClientCreditResponseDto> getMyCredits(@AuthenticationPrincipal User user) {
+    public ResponseEntity<List<ClientCreditResponseDto>> getMyCredits(@AuthenticationPrincipal User user) {
         Long clientId = user.getIdUser();
         return ResponseEntity.ok(clientCreditQueryService.getMyCredits(clientId));
     }
@@ -74,7 +83,7 @@ public class CreditController {
 
     @GetMapping("/cooperative/me/requests")
     @PreAuthorize("hasRole('COOPERATIVE')")
-    public ResponseEntity<?> getMyCooperativeRequests(
+    public ResponseEntity<Object> getMyCooperativeRequests(
             @AuthenticationPrincipal User user
     ) {
         Long cooperativaId = user.getCooperativaId();
@@ -86,7 +95,7 @@ public class CreditController {
 
     @PutMapping("/cooperative/me/requests/{solicitudId}/decision")
     @PreAuthorize("hasRole('COOPERATIVE')")
-    public ResponseEntity<?> decideRequest(
+    public ResponseEntity<Map<String, Object>> decideRequest(
             @PathVariable Long solicitudId,
             @RequestBody CooperativeDecisionRequestDto dto,
             @AuthenticationPrincipal User user
@@ -100,7 +109,7 @@ public class CreditController {
         );
 
         return ResponseEntity.ok(
-                Map.of("message", "DecisiÃ³n registrada correctamente")
+                Map.of("message", "Decisión registrada correctamente")
         );
     }
     //----------------------------------------------------------------------------------------
@@ -109,7 +118,7 @@ public class CreditController {
 
     @PutMapping("/cooperative/me/requests/{solicitudId}/solicitar-garante")
     @PreAuthorize("hasRole('COOPERATIVE')")
-    public ResponseEntity<?> solicitarGarante(
+    public ResponseEntity<Map<String, Object>> solicitarGarante(
             @PathVariable Long solicitudId,
             @AuthenticationPrincipal User user
     ) {
@@ -145,7 +154,7 @@ public class CreditController {
     //----------------------------------------------------------------------------------------
 
     @PutMapping("/me/{solicitudId}/cooperatives/{cooperativaId}/accept")
-    public ResponseEntity<?> acceptPreApproved(
+    public ResponseEntity<Map<String, Object>> acceptPreApproved(
             @AuthenticationPrincipal User user,
             @PathVariable Long solicitudId,
             @PathVariable Long cooperativaId

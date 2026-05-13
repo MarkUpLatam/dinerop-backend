@@ -25,25 +25,43 @@ public class CreditDistributionService {
     public int distributeToCityCooperatives(CreditRequest request) {
 
         String city = request.getCity();
-        if (city == null || city.isBlank()) {
-            log.warn("[DISTRIBUTION] Request {} has no city. Skipping distribution.", request.getId());
-            return 0;
-        }
+        String province = request.getProvince();
 
         if (request.getAmount() == null) {
             log.warn("[DISTRIBUTION] Request {} has no amount. Skipping distribution.", request.getId());
             return 0;
         }
 
+        if ((city == null || city.isBlank()) && (province == null || province.isBlank())) {
+            log.warn("[DISTRIBUTION] Request {} has no city nor province. Skipping distribution.", request.getId());
+            return 0;
+        }
+
+        // 1) Intentar por ciudad + provincia (más especifico)
         List<Cooperative> cooperatives = cooperativeService.getEligibleCooperatives(
                 city,
-                request.getProvince(),
+                province,
                 request.getAmount().doubleValue()
         );
+
+        // 2) Fallback: si no hay cooperativas en la ciudad, intentar a nivel provincia
+        if (cooperatives.isEmpty() && province != null && !province.isBlank()) {
+            log.info(
+                    "[DISTRIBUTION] No cooperatives in city={}. Falling back to province={} | requestId={}",
+                    city, province, request.getId()
+            );
+            cooperatives = cooperativeService.getEligibleCooperatives(
+                    null,
+                    province,
+                    request.getAmount().doubleValue()
+            );
+        }
+
         if (cooperatives.isEmpty()) {
             log.info(
-                    "[DISTRIBUTION] No eligible cooperatives | city={} amount={} requestId={}",
+                    "[DISTRIBUTION] No eligible cooperatives even after fallback | city={} province={} amount={} requestId={}",
                     city,
+                    province,
                     request.getAmount(),
                     request.getId()
             );
